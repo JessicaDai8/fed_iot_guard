@@ -224,7 +224,7 @@ def krum_aggregation(global_model: torch.nn.Module, models: List[torch.nn.Module
         global_model.load_state_dict(state_dict_result)
 
 
-# Update model_aggregation to use krum_aggregation function
+# Update model_aggregation to use  krum_aggregation function
 def model_aggregation(global_model: torch.nn.Module, models: List[torch.nn.Module], params: SimpleNamespace, verbose:
 bool = False)\
         -> Tuple[torch.nn.Module, List[torch.nn.Module]]:
@@ -240,3 +240,4 @@ bool = False)\
     models = [deepcopy(global_model) for _ in range(len(params.clients_devices))]
 
     return global_model, models
+
