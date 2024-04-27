@@ -1,3 +1,4 @@
+from collections import defaultdict
 from copy import deepcopy
 from types import SimpleNamespace
 from typing import List, Set, Tuple, Callable, Optional
@@ -177,27 +178,35 @@ def model_poisoning(global_model: torch.nn.Module, models: List[torch.nn.Module]
     model_update_scaling(global_model=global_model, malicious_clients_models=malicious_clients_models, factor=params.model_update_factor)
     return models
 
-def krum_aggregation(global_model: torch.nn.Module, models: List[torch.nn.Module]) -> None:
+
+# Modified krum_aggregation function to use bucket aggregation
+bucket_size = 0.1
+def bucket_aggregation(global_model: torch.nn.Module, models: List[torch.nn.Module], bucket_size: float) -> None:
     # Define the K parameter for Krum
-    k = len(models) - (len(models)//4 + 1)
+    k = len(models) - (len(models) // 4 + 1)
 
     with torch.no_grad():
         state_dict_result = global_model.state_dict()
         for key in state_dict_result:
-            # Calculate the Euclidean distances from each model to every other model
-            distances = []
+            # Initialize buckets dictionary to store distances
+            buckets = defaultdict(list)
+
+            # Iterate over each model to calculate distances
             for i in range(len(models)):
-                dists = []
                 for j in range(len(models)):
                     if i != j:
-                        dists.append(torch.norm(models[i].state_dict()[key] - models[j].state_dict()[key]))
-                distances.append(dists)
+                        distance = torch.norm(models[i].state_dict()[key] - models[j].state_dict()[key])
+                        # Calculate the bucket index for the distance
+                        bucket_index = int(distance.item() / bucket_size)
 
-            # Calculate the scores for each model based on the number of models within distance K
+                        # Add the distance to the corresponding bucket
+                        buckets[bucket_index].append(distance.item())
+
+            # Initialize list to store scores for each model
             scores = [0] * len(models)
             for i in range(len(models)):
                 for j in range(len(models)):
-                    if min(distances[i]) <= min(distances[j]) and min(distances[i]) <= min(sorted(distances[i])[k:]):
+                    if min(buckets[i]) <= min(buckets[j]) and min(buckets[i]) <= min(sorted(buckets[i])[k:]):
                         scores[i] += 1
 
             # Select the model with the lowest score as the aggregated model
@@ -206,55 +215,6 @@ def krum_aggregation(global_model: torch.nn.Module, models: List[torch.nn.Module
             state_dict_result[key] = models[min_score_idx].state_dict()[key]
 
         global_model.load_state_dict(state_dict_result)
-
-def bucket_aggregation(global_model: torch.nn.Module, models: List[torch.nn.Module]) -> None:
-    # Define the K parameter for Krum
-    k = len(models) - (len(models)//4 + 1)
-
-    with torch.no_grad():
-        state_dict_result = global_model.state_dict()
-        for key in state_dict_result:
-            # Calculate the Euclidean distances from each model to every other model
-            distances = []
-            for i in range(len(models)):
-                dists = []
-                for j in range(len(models)):
-                    if i != j:
-                        dists.append(torch.norm(models[i].state_dict()[key] - models[j].state_dict()[key]))
-                distances.append(dists)
-
-            # Calculate the scores for each model based on the number of models within distance K
-            scores = [0] * len(models)
-            for i in range(len(models)):
-                for j in range(len(models)):
-                    if min(distances[i]) <= min(distances[j]) and min(distances[i]) <= min(sorted(distances[i])[k:]):
-                        scores[i] += 1
-
-            # Select the models with the lowest scores and aggregate them using bucket aggregation
-            selected_models_indices = [i for i, score in enumerate(scores) if score == min(scores)]
-            aggregated_values = {}
-            for i in selected_models_indices:
-                for j in range(len(models)):
-                    if i != j:
-                        value = torch.norm(models[i].state_dict()[key] - models[j].state_dict()[key]).item()
-                        if value not in aggregated_values:
-                            aggregated_values[value] = []
-                        aggregated_values[value].append(models[i].state_dict()[key])
-
-            # Apply bucket aggregation to the aggregated values
-            aggregated_results = {}
-            for value, values_list in aggregated_values.items():
-                aggregated_results[value] = bucket_aggregation(values_list, BUCKET_SIZE)
-
-            # Select the bucket with the lowest key (which represents the closest aggregation result)
-            min_bucket_key = min(aggregated_results.keys())
-            aggregated_model_state = aggregated_results[min_bucket_key]
-
-            # Update the global model state with the aggregated model state
-            state_dict_result[key] = torch.tensor(list(aggregated_model_state.values()))
-
-        global_model.load_state_dict(state_dict_result)
-
 
 # Update model_aggregation to use krum_aggregation function (source: https://github.com/wanglun1996/secure-robust-federated-learning)
 def model_aggregation(global_model: torch.nn.Module, models: List[torch.nn.Module], params: SimpleNamespace, verbose:
@@ -267,13 +227,7 @@ bool = False)\
             Ctp.print(indexes)
     params.aggregation_function(global_model, models)
 
-    bucket_aggregation(global_model, models)
-
-    # Distribute the global model back to each client
-    models = [deepcopy(global_model) for _ in range(len(params.clients_devices))]
-
-    return global_model, models
-
+    bucket_aggregation(global_model, models, 0.1)
 
     # Distribute the global model back to each client
     models = [deepcopy(global_model) for _ in range(len(params.clients_devices))]
