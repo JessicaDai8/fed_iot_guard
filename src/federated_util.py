@@ -178,20 +178,20 @@ def model_poisoning(global_model: torch.nn.Module, models: List[torch.nn.Module]
     return models
 
 
-# Aggregates the model according to params.aggregation_function, potentially using s-resampling, and distributes the global model back to the clients
-# def model_aggregation(global_model: torch.nn.Module, models: List[torch.nn.Module], params: SimpleNamespace, verbose: bool = False)\
-#         -> Tuple[torch.nn.Module, List[torch.nn.Module]]:
-#
-#     if params.resampling is not None:
-#         models, indexes = s_resampling(models, params.resampling)
-#         if verbose:
-#             Ctp.print(indexes)
-#     params.aggregation_function(global_model, models)
-#
-#     # Distribute the global model back to each client
-#     models = [deepcopy(global_model) for _ in range(len(params.clients_devices))]
-#
-#     return global_model, models
+Aggregates the model according to params.aggregation_function, potentially using s-resampling, and distributes the global model back to the clients
+def model_aggregation(global_model: torch.nn.Module, models: List[torch.nn.Module], params: SimpleNamespace, verbose: bool = False)\
+        -> Tuple[torch.nn.Module, List[torch.nn.Module]]:
+
+    if params.resampling is not None:
+        models, indexes = s_resampling(models, params.resampling)
+        if verbose:
+            Ctp.print(indexes)
+    params.aggregation_function(global_model, models)
+
+    # Distribute the global model back to each client
+    models = [deepcopy(global_model) for _ in range(len(params.clients_devices))]
+
+    return global_model, models
 
 def krum_aggregation(global_model: torch.nn.Module, models: List[torch.nn.Module]) -> None:
     # Define the K parameter for Krum
@@ -225,19 +225,19 @@ def krum_aggregation(global_model: torch.nn.Module, models: List[torch.nn.Module
 
 
 # Update model_aggregation to use krum_aggregation function (source: https://github.com/wanglun1996/secure-robust-federated-learning)
-def model_aggregation(global_model: torch.nn.Module, models: List[torch.nn.Module], params: SimpleNamespace, verbose:
-bool = False)\
-        -> Tuple[torch.nn.Module, List[torch.nn.Module]]:
+# def model_aggregation(global_model: torch.nn.Module, models: List[torch.nn.Module], params: SimpleNamespace, verbose:
+# bool = False)\
+#         -> Tuple[torch.nn.Module, List[torch.nn.Module]]:
 
-    if params.resampling is not None:
-        models, indexes = s_resampling(models, params.resampling)
-        if verbose:
-            Ctp.print(indexes)
+#     if params.resampling is not None:
+#         models, indexes = s_resampling(models, params.resampling)
+#         if verbose:
+#             Ctp.print(indexes)
 
-    krum_aggregation(global_model, models)
+#     krum_aggregation(global_model, models)
 
-    # Distribute the global model back to each client
-    models = [deepcopy(global_model) for _ in range(len(params.clients_devices))]
+#     # Distribute the global model back to each client
+#     models = [deepcopy(global_model) for _ in range(len(params.clients_devices))]
 
-    return global_model, models
+#     return global_model, models
 
