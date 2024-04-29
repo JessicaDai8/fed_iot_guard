@@ -11,7 +11,7 @@ In 2023, researchers from Berkeley (among other universities) released a paper f
 Our project seeks to improve Fed_IoT_Guard's resistance to data poisoning attacks via the Byzantine-Robust Aggregation methods from (Zhu, 2023). Doing so can help organizations worldwide more effectively avoid malware threats, reducing financial loss.
 
 ## Testing Code
-To test the three different aggregation functions, go to main.py and change line 81 to your desired aggregated function. You can choose betweek krum_aggregation, federated_averaging and federated_median. Remember that Krum's is available onnly in the Krum's branch.
+To test the three different aggregation functions, go to main.py and change line 81 to your desired aggregated function. You can choose betweek krum_aggregation, federated_averaging and federated_median. Remember that Krum's is available only in the Krum's branch.
 
 To simulate our results, run these commands:
 
