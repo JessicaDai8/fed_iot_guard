@@ -10,6 +10,18 @@ In 2023, researchers from Berkeley (among other universities) released a paper f
 
 Our project seeks to improve Fed_IoT_Guard's resistance to data poisoning attacks via the Byzantine-Robust Aggregation methods from (Zhu, 2023). Doing so can help organizations worldwide more effectively avoid malware threats, reducing financial loss.
 
+## Testing Code
+To test the three different aggregation functions, go to main.py and change line 81 to your desired aggregated function. You can choose betweek krum_aggregation, federated_averaging and federated_median. Remember that Krum's is available onnly in the Krum's branch.
+
+To simulate our results, run these commands:
+
+Supervised: 
+python src/main.py decentralized classifier --test --fedavg --collaborative --verbose-depth=5
+
+Unsupervised:
+python src/main.py decentralized autoencoder --test --fedavg --collaborative --verbose-depth=6
+
+
 # Works Cited
 
 Blanchard, P., El Mhamdi, E. M., Guerraoui, R., & Stainer, J. (2017). Machine learning with adversaries: Byzantine tolerant gradient descent. Advances in neural information processing systems, 30.
